@@ -17,10 +17,13 @@ urlpatterns = [
     #Menu
     path('restaurants/<int:pk>/categories/<int:category_pk>/menuitems/', views.MenuItemView.as_view(), name='menu-items'),
     path('restaurants/<int:pk>/categories/<int:category_pk>/menuitems/<int:menuitem_pk>/', views.MenuDetailsView.as_view(), name='menu-items-detail'),
+    #Cart Views
+    path('cart/', views.CartListView.as_view(), name='cart'),
+    path('cart/items/', views.CartItemView.as_view(), name='cart-item'),
+    #Order Views
+    path('checkout/', views.CheckoutView.as_view(), name='order'),
     #Public Views
     path('<slug:slug>/', views.PublicRestaurantView.as_view(), name='public-menu'),
-    path('public/restaurants/', views.PublicAllRestaurantsView.as_view(), name='restaurant-public')
-
-    # path('restaurant/category/', views.CategoryView.as_view(), name='category'),
-    # path('restaurant/menu', views.MenuItemView.as_view(), name='menu')
+    path('public/restaurants/', views.PublicAllRestaurantsView.as_view(), name='restaurant-public'),
+    
 ]

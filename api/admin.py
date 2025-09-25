@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Restaurant, Category, MenuItem
+from .models import User, Restaurant, Category, MenuItem, Cart, CartItem, Order, OrderItem
 from django.utils.html import format_html
 
 # Register your models here.
@@ -10,6 +10,27 @@ from django.utils.html import format_html
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ['username', 'password', "email", "is_resturaunt"]
+
+
+class CartItemInline(admin.TabularInline):
+    model = CartItem
+    extra= 1
+
+@admin.register(Cart)
+class CartAdmin(admin.ModelAdmin):
+    list_display = ['user', 'created_at']
+    inlines = [CartItemInline]
+
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra= 1
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['restaurant', 'total_price', 'customer_name', 'status']
+    list_editable = ['status']
+    inlines = [OrderItemInline]
 
 
 # @admin.register(Category)

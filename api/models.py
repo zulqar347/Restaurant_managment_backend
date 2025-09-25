@@ -4,6 +4,7 @@ from django.utils.text import slugify
 import qrcode
 from io import BytesIO
 from django.core.files import File
+from django.utils import  timezone
 
 class User(AbstractUser):
     is_resturaunt = models.BooleanField(default=False)
@@ -65,6 +66,90 @@ class MenuItem(models.Model):
         return self.name
     
     
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart', null=True, blank=True)
+    session_key = models.CharField(max_length=40, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        if self.user:
+            return f"Cart of {self.user.username}"
+        else:
+            return f"cart of {self.session_key}"
+    
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart_item')
+    menu_item = models.ForeignKey(MenuItem, on_delete=models.CASCADE, related_name='cart_item')
+    quantity = models.PositiveIntegerField(default=1)
+    
+
+    def __str__(self):
+        return f"{self.menu_item.name} * {self.quantity}"
+    
+    def total_price(self):
+        return self.menu_item.price * self.quantity
+    
+    @property
+    def restaurant(self):
+        return self.menu_item.category.restaurant
+    
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("preparing", "Preparing"),
+        ("ready", "Ready for Pickup"),
+        ("delivered", "Delivered"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
+    restaurant = models.ForeignKey("Restaurant", on_delete=models.CASCADE)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    customer_name = models.CharField(max_length=255)
+    customer_phone = models.CharField(max_length=50)
+    delivery_address = models.TextField(blank=True, null=True)  # Optional for takeout
+
+    def __str__(self):
+        return f"Order #{self.id} - {self.restaurant.name} - {self.status}"
+    
+    @property
+    def formatted_updated_at(self):
+        return self.updated_at.strftime("%d %b %Y") 
+    
+
+    
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    menu_item = models.ForeignKey(MenuItem, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.menu_item.name} x {self.quantity}"
+
+    @property
+    def total_price(self):
+        return self.price * self.quantity
+
+
+class Payment(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="payment")
+    payment_method = models.CharField(max_length=50)  # e.g. "card", "cash"
+    payment_status = models.CharField(max_length=20, default="pending")
+    transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment for Order #{self.order.id} - {self.payment_status}"
+
 
 
 
